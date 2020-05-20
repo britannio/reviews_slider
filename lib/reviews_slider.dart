@@ -1,32 +1,28 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:vector_math/vector_math.dart' as v_math;
 
-typedef OnChange = void Function(int index);
+import 'package:flutter/gestures.dart';
+import 'package:vector_math/vector_math.dart' as v_math;
 
 class ReviewSlider extends StatefulWidget {
   const ReviewSlider({
     Key key,
+    this.initialValue = 1,
     @required this.onChange,
-    this.initialValue = 2,
-    this.options = const ['Terrible', 'Bad', 'Okay', 'Good', 'Great'],
+    this.options = const ['Bad', 'Okay', 'Great'],
     this.optionStyle,
     this.width,
-    this.circleDiameter = 60
+    this.circleDiameter = 48,
   })  : assert(
-          initialValue >= 0 && initialValue <= 4,
-          'Initial value should be between 0 and 4',
+          initialValue >= 0 && initialValue <= 2,
+          'Initial value should be between 0 and 2',
         ),
-        assert(
-          options.length == 5,
-          'Reviews options should be 5',
-        ),
+        assert(options.length == 3),
         super(key: key);
 
   /// The onChange callback calls every time when a pointer have changed
   /// the value of the slider and is no longer in contact with the screen.
-  /// Callback function argument is an int number from 0 to 4, where
-  /// 0 is the worst review value and 4 is the best review value
+  /// Callback function argument is an int number from 0 to 2, where
+  /// 0 is the worst review value and 2 is the best review value
 
   /// ```dart
   /// ReviewSlider(
@@ -36,7 +32,7 @@ class ReviewSlider extends StatefulWidget {
   /// ),
   /// ```
 
-  final OnChange onChange;
+  final ValueChanged<int> onChange;
   final int initialValue;
   final List<String> options;
   final TextStyle optionStyle;
@@ -46,7 +42,8 @@ class ReviewSlider extends StatefulWidget {
   _ReviewSliderState createState() => _ReviewSliderState();
 }
 
-class _ReviewSliderState extends State<ReviewSlider> with SingleTickerProviderStateMixin {
+class _ReviewSliderState extends State<ReviewSlider>
+    with SingleTickerProviderStateMixin {
   Animation<double> _animation;
   double _animationValue;
   double _xOffset;
@@ -89,7 +86,7 @@ class _ReviewSliderState extends State<ReviewSlider> with SingleTickerProviderSt
   }
 
   void handleTap(int state) {
-    _controller.duration = Duration(milliseconds: 400);
+    _controller.duration = Duration(milliseconds: 200);
     _tween.begin = _tween.end;
     _tween.end = state.toDouble();
     _controller.reset();
@@ -121,13 +118,16 @@ class _ReviewSliderState extends State<ReviewSlider> with SingleTickerProviderSt
   }
 
   void _onDragStart(x, width) {
-    var oneStepWidth = (width - widget.circleDiameter) / (widget.options.length - 1);
+    var oneStepWidth =
+        (width - widget.circleDiameter) / (widget.options.length - 1);
     _xOffset = x - (oneStepWidth * _animationValue);
   }
 
   _calcAnimatedValueFormDragX(x, innerWidth) {
     x = x - _xOffset;
-    return x / (innerWidth - widget.circleDiameter) * (widget.options.length - 1);
+    return x /
+        (innerWidth - widget.circleDiameter) *
+        (widget.options.length - 1);
   }
 
   @override
@@ -143,20 +143,28 @@ class _ReviewSliderState extends State<ReviewSlider> with SingleTickerProviderSt
                 states: widget.options,
                 handleTap: handleTap,
                 animationValue: _animationValue,
-//                width: size.maxWidth,
-                width: widget.width != null && widget.width < size.maxWidth ? widget.width : size.maxWidth,
+                //  width: size.maxWidth,
+                width: widget.width != null && widget.width < size.maxWidth
+                    ? widget.width
+                    : size.maxWidth,
                 optionStyle: widget.optionStyle,
                 circleDiameter: widget.circleDiameter,
               ),
               MyIndicator(
                 circleDiameter: widget.circleDiameter,
                 animationValue: _animationValue,
-                width: widget.width != null && widget.width < size.maxWidth ? widget.width : size.maxWidth,
+                width: size.maxWidth,
                 onDragStart: (details) {
-                  _onDragStart(details.globalPosition.dx, widget.width != null && widget.width < size.maxWidth ? widget.width : size.maxWidth);
+                  _onDragStart(
+                    details.globalPosition.dx,
+                    size.maxWidth,
+                  );
                 },
                 onDrag: (details) {
-                  _onDrag(details.globalPosition.dx, widget.width != null && widget.width < size.maxWidth ? widget.width : size.maxWidth);
+                  _onDrag(
+                    details.globalPosition.dx,
+                    size.maxWidth,
+                  );
                 },
                 onDragEnd: _onDragEnd,
               ),
@@ -172,14 +180,13 @@ class _ReviewSliderState extends State<ReviewSlider> with SingleTickerProviderSt
 const double paddingSize = 10;
 
 class MeasureLine extends StatelessWidget {
-  MeasureLine({
-    this.handleTap,
-    this.animationValue,
-    this.states,
-    this.width,
-    this.optionStyle,
-    this.circleDiameter
-  });
+  MeasureLine(
+      {this.handleTap,
+      this.animationValue,
+      this.states,
+      this.width,
+      this.optionStyle,
+      this.circleDiameter});
 
   final double animationValue;
   final Function handleTap;
@@ -269,11 +276,10 @@ class MeasureLine extends StatelessWidget {
 }
 
 class Face extends StatelessWidget {
-  Face({
-    this.color = const Color(0xFF616154),
-    this.animationValue,
-    this.circleDiameter
-  });
+  Face(
+      {this.color = const Color(0xFF616154),
+      this.animationValue,
+      this.circleDiameter});
 
   final double animationValue;
   final Color color;
@@ -323,10 +329,6 @@ class MyPainter extends CustomPainter {
         angle = 55 - unitAnimatingValue * 50;
         wide = 80.0;
         break;
-      case 1:
-        wide = 80 - unitAnimatingValue * 80;
-        angle = 5;
-        break;
     }
     var degree1 = 90 * 3 + angle;
     var degree2 = 90 * 3 - angle + wide;
@@ -336,21 +338,17 @@ class MyPainter extends CustomPainter {
     var eyeRadius = 5.0;
 
     var paint = Paint()..color = color;
+    // Left eye
     canvas.drawArc(
-      Rect.fromCircle(
-        center: Offset(x1, y),
-        radius: eyeRadius,
-      ),
+      Rect.fromCircle(center: Offset(x1, y), radius: eyeRadius),
       v_math.radians(degree1),
       v_math.radians(360 - wide),
       false,
       paint,
     );
+    // Right eye
     canvas.drawArc(
-      Rect.fromCircle(
-        center: Offset(x2, y),
-        radius: eyeRadius,
-      ),
+      Rect.fromCircle(center: Offset(x2, y), radius: eyeRadius),
       v_math.radians(degree2),
       v_math.radians(360 - wide),
       false,
@@ -377,39 +375,12 @@ class MyPainter extends CustomPainter {
         y3 = lowerY;
         break;
       case 1:
-        y1 = lowerY;
-        x2 = middleX;
-        y2 = unitAnimatingValue * (middleY - upperY) + upperY;
-        y3 = lowerY - unitAnimatingValue * (lowerY - upperY);
-        break;
-      case 2:
         y1 = unitAnimatingValue * (upperY - lowerY) + lowerY;
         x2 = middleX;
         y2 = unitAnimatingValue * (lowerY + 3 - middleY) + middleY;
         y3 = upperY;
         break;
-      case 3:
-        y1 = upperY;
-        x2 = middleX;
-        y2 = lowerY + 3;
-        y3 = upperY;
-        path2 = Path()
-          ..moveTo(leftX, y1)
-          ..quadraticBezierTo(
-            x2,
-            y2,
-            upperY - 2.5,
-            y3 - 2.5,
-          )
-          ..quadraticBezierTo(
-            x2,
-            y2 - unitAnimatingValue * (y2 - upperY + 2.5),
-            leftX,
-            upperY - 2.5,
-          )
-          ..close();
-        break;
-      case 4:
+      case 2:
         y1 = upperY;
         x2 = middleX;
         y2 = lowerY + 3;
@@ -441,12 +412,13 @@ class MyPainter extends CustomPainter {
       );
 
     canvas.drawPath(
-        path,
-        Paint()
-          ..color = color
-          ..style = PaintingStyle.stroke
-          ..strokeCap = StrokeCap.round
-          ..strokeWidth = 5);
+      path,
+      Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeWidth = 5,
+    );
 
     if (path2 != null) {
       canvas.drawPath(
@@ -467,20 +439,21 @@ class MyIndicator extends StatelessWidget {
     this.onDrag,
     this.onDragStart,
     this.onDragEnd,
-    this.circleDiameter
+    this.circleDiameter,
   })  : width = width - circleDiameter,
-        possition = animationValue == 0 ? 0 : animationValue / 4;
+        // / 2 controls how many positions are available
+        position = animationValue / 2;
 
   final double animationValue;
   final Function onDrag;
   final Function onDragEnd;
   final Function onDragStart;
-  final double possition;
+  final double position;
   final double width;
   final double circleDiameter;
 
   _buildIndicator() {
-    var opacityOfYellow = possition > 0.5 ? 1.0 : possition * 2;
+    var opacityOfYellow = position > 0.5 ? 1.0 : position * 2;
     return GestureDetector(
       onHorizontalDragStart: onDragStart,
       onHorizontalDragUpdate: onDrag,
@@ -515,7 +488,7 @@ class MyIndicator extends StatelessWidget {
     return Container(
       child: Positioned(
         top: 0,
-        left: width * possition,
+        left: width * position,
         child: _buildIndicator(),
       ),
     );
@@ -523,11 +496,16 @@ class MyIndicator extends StatelessWidget {
 }
 
 class Head extends StatelessWidget {
-  Head({this.color = const Color(0xFFc9ced2), this.hasShadow = false, this.circleDiameter});
+  Head({
+    this.color = const Color(0xFFc9ced2),
+    this.hasShadow = false,
+    @required this.circleDiameter,
+  });
 
   final Color color;
   final bool hasShadow;
   final double circleDiameter;
+
   @override
   Widget build(BuildContext context) {
     return Container(
