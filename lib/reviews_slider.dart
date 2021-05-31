@@ -5,13 +5,13 @@ import 'package:vector_math/vector_math.dart' as v_math;
 
 class ReviewSlider extends StatefulWidget {
   const ReviewSlider({
-    Key key,
-    this.initialValue = 1,
-    @required this.onChange,
+    Key? key,
+    required this.onChange,
+    this.initialValue = 2,
     this.options = const ['Bad', 'Okay', 'Great'],
     this.optionStyle,
     this.width,
-    this.circleDiameter = 48,
+    this.circleDiameter = 60,
   })  : assert(
           initialValue >= 0 && initialValue <= 2,
           'Initial value should be between 0 and 2',
@@ -35,8 +35,8 @@ class ReviewSlider extends StatefulWidget {
   final ValueChanged<int> onChange;
   final int initialValue;
   final List<String> options;
-  final TextStyle optionStyle;
-  final double width;
+  final TextStyle? optionStyle;
+  final double? width;
   final double circleDiameter;
   @override
   _ReviewSliderState createState() => _ReviewSliderState();
@@ -44,12 +44,12 @@ class ReviewSlider extends StatefulWidget {
 
 class _ReviewSliderState extends State<ReviewSlider>
     with SingleTickerProviderStateMixin {
-  Animation<double> _animation;
-  double _animationValue;
-  double _xOffset;
+  late Animation<double> _animation;
+  late double _animationValue;
+  late double _xOffset;
 
-  AnimationController _controller;
-  Tween<double> _tween;
+  late AnimationController _controller;
+  late Tween<double> _tween;
 
   @override
   void dispose() {
@@ -78,7 +78,7 @@ class _ReviewSliderState extends State<ReviewSlider>
         });
       });
     _animationValue = initValue;
-    WidgetsBinding.instance.addPostFrameCallback(_afterLayout);
+    WidgetsBinding.instance!.addPostFrameCallback(_afterLayout);
   }
 
   _afterLayout(_) {
@@ -143,9 +143,9 @@ class _ReviewSliderState extends State<ReviewSlider>
                 states: widget.options,
                 handleTap: handleTap,
                 animationValue: _animationValue,
-                //  width: size.maxWidth,
-                width: widget.width != null && widget.width < size.maxWidth
-                    ? widget.width
+//                width: size.maxWidth,
+                width: widget.width != null && widget.width! < size.maxWidth
+                    ? widget.width!
                     : size.maxWidth,
                 optionStyle: widget.optionStyle,
                 circleDiameter: widget.circleDiameter,
@@ -153,18 +153,22 @@ class _ReviewSliderState extends State<ReviewSlider>
               MyIndicator(
                 circleDiameter: widget.circleDiameter,
                 animationValue: _animationValue,
-                width: size.maxWidth,
+                width: widget.width != null && widget.width! < size.maxWidth
+                    ? widget.width
+                    : size.maxWidth,
                 onDragStart: (details) {
                   _onDragStart(
-                    details.globalPosition.dx,
-                    size.maxWidth,
-                  );
+                      details.globalPosition.dx,
+                      widget.width != null && widget.width! < size.maxWidth
+                          ? widget.width
+                          : size.maxWidth);
                 },
                 onDrag: (details) {
                   _onDrag(
-                    details.globalPosition.dx,
-                    size.maxWidth,
-                  );
+                      details.globalPosition.dx,
+                      widget.width != null && widget.width! < size.maxWidth
+                          ? widget.width
+                          : size.maxWidth);
                 },
                 onDragEnd: _onDragEnd,
               ),
@@ -180,19 +184,20 @@ class _ReviewSliderState extends State<ReviewSlider>
 const double paddingSize = 10;
 
 class MeasureLine extends StatelessWidget {
-  MeasureLine(
-      {this.handleTap,
-      this.animationValue,
-      this.states,
-      this.width,
-      this.optionStyle,
-      this.circleDiameter});
+  MeasureLine({
+    required this.handleTap,
+    required this.animationValue,
+    required this.states,
+    required this.width,
+    this.optionStyle,
+    required this.circleDiameter,
+  });
 
   final double animationValue;
   final Function handleTap;
   final List<String> states;
   final double width;
-  final TextStyle optionStyle;
+  final TextStyle? optionStyle;
   final double circleDiameter;
   List<Widget> _buildUnits() {
     var res = <Widget>[];
@@ -276,10 +281,11 @@ class MeasureLine extends StatelessWidget {
 }
 
 class Face extends StatelessWidget {
-  Face(
-      {this.color = const Color(0xFF616154),
-      this.animationValue,
-      this.circleDiameter});
+  Face({
+    this.color = const Color(0xFF616154),
+    required this.animationValue,
+    required this.circleDiameter,
+  });
 
   final double animationValue;
   final Color color;
@@ -365,8 +371,8 @@ class MyPainter extends CustomPainter {
     var rightX = size.width - leftX;
     var middleX = size.width / 2;
 
-    double y1, y3, x2, y2;
-    Path path2;
+    late double y1, y3, x2, y2;
+    Path? path2;
     switch (activeIndex) {
       case 0:
         y1 = lowerY;
@@ -434,20 +440,19 @@ class MyPainter extends CustomPainter {
 
 class MyIndicator extends StatelessWidget {
   MyIndicator({
-    this.animationValue,
-    width,
-    this.onDrag,
-    this.onDragStart,
-    this.onDragEnd,
-    this.circleDiameter,
-  })  : width = width - circleDiameter,
-        // / 2 controls how many positions are available
+    required this.animationValue,
+    required width,
+    required this.onDrag,
+    required this.onDragStart,
+    required this.onDragEnd,
+    required this.circleDiameter,
+  })   : width = width - circleDiameter,
         position = animationValue / 2;
 
   final double animationValue;
-  final Function onDrag;
-  final Function onDragEnd;
-  final Function onDragStart;
+  final Function(DragUpdateDetails) onDrag;
+  final Function(DragEndDetails) onDragEnd;
+  final Function(DragStartDetails) onDragStart;
   final double position;
   final double width;
   final double circleDiameter;
@@ -466,11 +471,13 @@ class MyIndicator extends StatelessWidget {
             Head(
               color: Color(0xFFf4b897),
               hasShadow: true,
+              circleDiameter: circleDiameter,
             ),
             Opacity(
               opacity: opacityOfYellow,
               child: Head(
                 color: Color(0xFFfee385),
+                circleDiameter: circleDiameter,
               ),
             ),
             Face(
@@ -499,7 +506,7 @@ class Head extends StatelessWidget {
   Head({
     this.color = const Color(0xFFc9ced2),
     this.hasShadow = false,
-    @required this.circleDiameter,
+    required this.circleDiameter,
   });
 
   final Color color;
